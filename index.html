@@ -6,6 +6,8 @@
     <title>TD7 — Image Tracking NFT</title>
     <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
     <script src="vendor/aframe-ar-nft-3.4.8.js"></script>
+    <script src="vendor/omggif-1.0.10.js"></script>
+    <script src="js/animated-gif.js"></script>
     <style>
         body { margin: 0; overflow: hidden; }
         #loading {
@@ -26,11 +28,11 @@
     <script>
         (function () {
             var trackingReady = false;
-            var modelReady = false;
+            var gifReady = false;
 
             function finishLoading() {
                 var loader = document.getElementById('loading');
-                if (trackingReady && modelReady && loader) loader.remove();
+                if (trackingReady && gifReady && loader) loader.remove();
             }
 
             window.addEventListener('arjs-nft-loaded', function () {
@@ -38,16 +40,16 @@
                 finishLoading();
             });
 
-            document.addEventListener('model-loaded', function (event) {
-                if (event.target.id !== 'character') return;
-                modelReady = true;
+            document.addEventListener('gif-loaded', function (event) {
+                if (event.target.id !== 'paoli-gif') return;
+                gifReady = true;
                 finishLoading();
             });
 
-            document.addEventListener('model-error', function (event) {
-                if (event.target.id !== 'character') return;
+            document.addEventListener('gif-error', function (event) {
+                if (event.target.id !== 'paoli-gif') return;
                 document.getElementById('loading').textContent =
-                    'Impossible de charger le personnage 3D. Rechargez la page.';
+                    'Impossible de charger le GIF. Rechargez la page.';
             });
 
             window.addEventListener('arjs-video-loaded', function (event) {
@@ -82,14 +84,16 @@
             smooth-count="10"
             smooth-tolerance="0.01"
             smooth-threshold="5">
-            <!-- Centered on the 768 × 1024, 63 dpi target. The GLB is Y-up. -->
-            <a-entity
-                id="character"
-                gltf-model="assets/fichier.glb"
-                position="153 30 -100"
-                scale="1.2 1.2 1.2"
-                rotation="-90 0 0">
-            </a-entity>
+            <!-- GIF at its original aspect ratio, centered just above the poster. -->
+            <a-plane
+                id="paoli-gif"
+                animated-gif="src: assets/paoli-corte.gif"
+                width="285"
+                height="282.935"
+                position="154.82 1 -206.43"
+                rotation="-90 0 0"
+                material="shader: flat; side: double; transparent: true">
+            </a-plane>
         </a-nft>
         <a-entity camera="near: 0.1; far: 10000"></a-entity>
     </a-scene>
