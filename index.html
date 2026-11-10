@@ -29,7 +29,6 @@
         (function () {
             var trackingReady = false;
             var gifReady = false;
-            var markerVisible = false;
 
             function finishLoading() {
                 var loader = document.getElementById('loading');
@@ -38,8 +37,6 @@
                     loader.textContent = 'Chargement du GIF…';
                 } else if (!trackingReady) {
                     loader.textContent = 'Initialisation de la reconnaissance de l’affiche…';
-                } else if (!markerVisible) {
-                    loader.textContent = 'Pointez la caméra vers l’affiche entière, bien éclairée et sans reflet.';
                 } else {
                     loader.remove();
                 }
@@ -75,15 +72,10 @@
                 var target = document.querySelector('a-nft');
                 if (!target) return;
                 target.addEventListener('markerFound', function () {
-                    markerVisible = true;
-                    finishLoading();
+                    console.info('Affiche NFT reconnue.');
                 });
                 target.addEventListener('markerLost', function () {
-                    markerVisible = false;
-                    if (trackingReady && gifReady && !document.getElementById('loading')) {
-                        // Keep the camera unobstructed when tracking is temporarily lost.
-                        console.info('Affiche perdue : recadrez l’affiche.');
-                    }
+                    console.info('Affiche perdue : recadrez l’affiche.');
                 });
             });
 
