@@ -24,6 +24,20 @@
             text-align: center;
             pointer-events: none;
         }
+        #ar-diagnostic {
+            position: fixed;
+            z-index: 10001;
+            top: max(8px, env(safe-area-inset-top));
+            left: 8px;
+            right: 8px;
+            padding: 10px 12px;
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.82);
+            color: #fff;
+            font: 12px/1.4 -apple-system, BlinkMacSystemFont, sans-serif;
+            pointer-events: none;
+            white-space: normal;
+        }
     </style>
     <script>
         (function () {
@@ -31,9 +45,29 @@
             var gifReady = false;
             var gifError = null;
             var startedAt = Date.now();
+            var seenMarker = false;
+            var lastError = '';
+            function showDiagnostic() {
+                var panel = document.getElementById('ar-diagnostic');
+                if (!panel) return;
+                panel.textContent = 'Diagnostic v3 | GIF : ' +
+                    (gifError ? 'ERREUR ' + gifError : gifReady ? 'OK' : 'en attente') +
+                    ' | NFT : ' + (trackingReady ? 'OK' : 'en attente') +
+                    ' | Affiche : ' + (seenMarker ? 'reconnue' : 'non reconnue') +
+                    (lastError ? ' | JS : ' + lastError : '');
+            }
+            window.addEventListener('error', function (e) {
+                lastError = (e.message || 'erreur JavaScript').slice(0, 150);
+                showDiagnostic();
+            });
+            window.addEventListener('unhandledrejection', function (e) {
+                lastError = String(e.reason && e.reason.message || e.reason || 'promise rejetée').slice(0, 150);
+                showDiagnostic();
+            });
 
             function finishLoading() {
                 var loader = document.getElementById('loading');
+                showDiagnostic();
                 if (!loader) return;
                 if (gifError) {
                     loader.textContent = 'Erreur GIF : ' + gifError;
@@ -75,6 +109,7 @@
 
             document.addEventListener('DOMContentLoaded', function () {
                 finishLoading();
+                setInterval(showDiagnostic, 2000);
                 setTimeout(function () {
                     var loader = document.getElementById('loading');
                     if (!loader) return;
@@ -86,9 +121,13 @@
                 var target = document.querySelector('a-nft');
                 if (!target) return;
                 target.addEventListener('markerFound', function () {
+                    seenMarker = true;
+                    showDiagnostic();
                     console.info('Affiche NFT reconnue.');
                 });
                 target.addEventListener('markerLost', function () {
+                    seenMarker = false;
+                    showDiagnostic();
                     console.info('Affiche perdue : recadrez l’affiche.');
                 });
             });
@@ -102,6 +141,7 @@
     </script>
 </head>
 <body>
+    <div id="ar-diagnostic" role="status">Diagnostic v3 : démarrage…</div>
     <div id="loading" role="status" aria-live="polite">Chargement, veuillez patienter…</div>
 
     <a-scene
