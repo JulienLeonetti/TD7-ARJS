@@ -58,17 +58,39 @@ AFRAME.registerComponent('animated-gif', {
             this.texture.minFilter = AFRAME.THREE.LinearFilter;
             this.texture.magFilter = AFRAME.THREE.LinearFilter;
 
+            // A-Frame may not have created the plane mesh when GIF decoding finishes.
             var mesh = this.el.getObject3D('mesh');
+            if (!mesh) {
+                mesh = await new Promise((resolve, reject) => {
+                    var el = this.el;
+                    var timeout = setTimeout(() => {
+                        el.removeEventListener('object3dset', onSet);
+                        reject(new Error('Le plan 3D n\u2019a pas été initialisé.'));
+                    }, 10000);
+                    function onSet() {
+                        var ready = el.getObject3D('mesh');
+                        if (ready) {
+                            clearTimeout(timeout);
+                            el.removeEventListener('object3dset', onSet);
+                            resolve(ready);
+                        }
+                    }
+                    el.addEventListener('object3dset', onSet);
+                    onSet();
+                });
+            }
+            if (this.removed) return;
             mesh.material.map = this.texture;
             mesh.material.toneMapped = false;
             mesh.material.needsUpdate = true;
             this.duration = elapsed;
             this.frames = frames;
             this.drawFrame(0);
-            this.el.emit('gif-loaded');
+            this.el.emit('gif-loaded', {}, true);
         } catch (error) {
             if (!this.removed && error.name !== 'AbortError') {
-                this.el.emit('gif-error', { error: error });
+                console.error('GIF AR:', error);
+                this.el.emit('gif-error', { error: error }, true);
             }
         }
     },
