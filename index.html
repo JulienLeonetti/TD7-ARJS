@@ -29,14 +29,20 @@
         (function () {
             var trackingReady = false;
             var gifReady = false;
+            var gifError = null;
+            var startedAt = Date.now();
 
             function finishLoading() {
                 var loader = document.getElementById('loading');
                 if (!loader) return;
-                if (!gifReady) {
-                    loader.textContent = 'Chargement du GIF…';
+                if (gifError) {
+                    loader.textContent = 'Erreur GIF : ' + gifError;
+                } else if (!gifReady && !trackingReady) {
+                    loader.textContent = 'Chargement du GIF et du suivi AR…';
+                } else if (!gifReady) {
+                    loader.textContent = 'Suivi AR prêt. Décodage du GIF…';
                 } else if (!trackingReady) {
-                    loader.textContent = 'Initialisation de la reconnaissance de l’affiche…';
+                    loader.textContent = 'GIF prêt. Initialisation du suivi AR…';
                 } else {
                     loader.remove();
                 }
@@ -55,9 +61,8 @@
 
             document.addEventListener('gif-error', function (event) {
                 if (event.target.id !== 'paoli-gif') return;
-                var loader = document.getElementById('loading');
-                if (loader) loader.textContent = 'Erreur GIF : ' +
-                    (event.detail && event.detail.error ? event.detail.error.message : 'chargement impossible');
+                gifError = event.detail && event.detail.error ? event.detail.error.message : 'chargement impossible';
+                finishLoading();
             });
 
             window.addEventListener('arjs-video-loaded', function (event) {
@@ -69,6 +74,15 @@
             });
 
             document.addEventListener('DOMContentLoaded', function () {
+                finishLoading();
+                setTimeout(function () {
+                    var loader = document.getElementById('loading');
+                    if (!loader) return;
+                    var state = 'GIF : ' + (gifError ? 'erreur (' + gifError + ')' : gifReady ? 'prêt' : 'non chargé') +
+                        ' | NFT : ' + (trackingReady ? 'prêt' : 'non initialisé');
+                    loader.textContent = 'Blocage détecté — ' + state +
+                        '. Faites une capture de cet écran.';
+                }, 12000);
                 var target = document.querySelector('a-nft');
                 if (!target) return;
                 target.addEventListener('markerFound', function () {
