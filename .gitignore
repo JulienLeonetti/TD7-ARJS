@@ -1,1 +1,16 @@
-﻿opencode.json
+# Fichiers systeme
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Fichiers temporaires et journaux
+*.tmp
+*~
+*.swp
+*.swo
+*.log
+
+# Secrets locaux
+.env
+.env.*
+!.env.example
