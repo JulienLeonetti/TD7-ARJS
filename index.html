@@ -29,10 +29,20 @@
         (function () {
             var trackingReady = false;
             var gifReady = false;
+            var markerVisible = false;
 
             function finishLoading() {
                 var loader = document.getElementById('loading');
-                if (trackingReady && gifReady && loader) loader.remove();
+                if (!loader) return;
+                if (!gifReady) {
+                    loader.textContent = 'Chargement du GIF…';
+                } else if (!trackingReady) {
+                    loader.textContent = 'Initialisation de la reconnaissance de l’affiche…';
+                } else if (!markerVisible) {
+                    loader.textContent = 'Pointez la caméra vers l’affiche entière, bien éclairée et sans reflet.';
+                } else {
+                    loader.remove();
+                }
             }
 
             window.addEventListener('arjs-nft-loaded', function () {
@@ -48,8 +58,9 @@
 
             document.addEventListener('gif-error', function (event) {
                 if (event.target.id !== 'paoli-gif') return;
-                document.getElementById('loading').textContent =
-                    'Impossible de charger le GIF. Rechargez la page.';
+                var loader = document.getElementById('loading');
+                if (loader) loader.textContent = 'Erreur GIF : ' +
+                    (event.detail && event.detail.error ? event.detail.error.message : 'chargement impossible');
             });
 
             window.addEventListener('arjs-video-loaded', function (event) {
@@ -58,6 +69,22 @@
                 video.defaultMuted = true;
                 video.playsInline = true;
                 video.setAttribute('webkit-playsinline', '');
+            });
+
+            document.addEventListener('DOMContentLoaded', function () {
+                var target = document.querySelector('a-nft');
+                if (!target) return;
+                target.addEventListener('markerFound', function () {
+                    markerVisible = true;
+                    finishLoading();
+                });
+                target.addEventListener('markerLost', function () {
+                    markerVisible = false;
+                    if (trackingReady && gifReady && !document.getElementById('loading')) {
+                        // Keep the camera unobstructed when tracking is temporarily lost.
+                        console.info('Affiche perdue : recadrez l’affiche.');
+                    }
+                });
             });
 
             window.addEventListener('camera-error', function () {
